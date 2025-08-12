@@ -94,7 +94,7 @@ app.get("/rooms/:roomId/p/:sharedContentId", (c) => {
 
 // Y.js WebSocket route using y-durableobjects
 // This handles WebSocket upgrades for room collaboration
-const yjsRoute = yRoute<{ Bindings: Env }>((env: Env) => env.GPGSYNC_ROOMS);
+const yjsRoute = yRoute<{ Bindings: Env }>((env: Env) => env.GPSYNC_ROOMS);
 app.route("/yjs", yjsRoute);
 
 // Health check endpoint
