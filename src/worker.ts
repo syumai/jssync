@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { yRoute } from "y-durableobjects";
-import { JsSyncDurableObject, JsSyncEnv } from "./jssync-durable-object.js";
+import { JSSyncDurableObject, JsSyncEnv } from "./jssync-durable-object.js";
 import {
   validateRoomId,
   InvalidArgumentError
@@ -78,4 +78,4 @@ app.onError((error, c) => {
 });
 
 export default app;
-export { JsSyncDurableObject };
+export { JSSyncDurableObject };

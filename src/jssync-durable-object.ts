@@ -6,7 +6,7 @@ export interface JsSyncEnv {
 }
 
 // Use any to bypass TypeScript issues with y-durableobjects for now
-export class JsSyncDurableObject extends (YDurableObjects as any) {
+export class JSSyncDurableObject extends (YDurableObjects as any) {
   private isInitialized: boolean = false;
 
   constructor(state: DurableObjectState, env: any) {
