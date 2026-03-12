@@ -1,29 +1,15 @@
-/* Original contents is available on https://github.com/syumai/go-playground-custom */
+/* JavaScript Playground - collaborative code editor */
 
 // Import dependencies from npm packages
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { CodemirrorBinding } from 'y-codemirror';
-import { GoPlayground } from '@syumai/goplayground';
+import { IframeSandboxExecutor, ExecutionMessage } from './js-executor.js';
 
 // Type declarations for global objects and interfaces
-interface GoPlaygroundOptions {
-  goimports: boolean;
+interface JsPlaygroundOptions {
   vimMode: boolean;
   tabSize: number;
-}
-
-interface GoPlaygroundResult {
-  Errors: string;
-  Events: Array<{
-    Kind: string;
-    Message: string;
-  }>;
-}
-
-interface GoPlaygroundFormatResult {
-  Error: string;
-  Body: string;
 }
 
 interface CodeMirrorEditor {
@@ -38,52 +24,42 @@ declare global {
     CodeMirror: CodeMirrorEditor;
     editor: any;
     roomId: string;
-    sharedContentId: string;
-    gpOptionsForm: HTMLFormElement;
+    jsOptionsForm: HTMLFormElement;
   }
 }
 
-// Go Playground setup
-let gpOriginal: GoPlayground, gpTip: GoPlayground, gp: GoPlayground;
-
-function initGoPlayground(): void {
-  gpOriginal = new GoPlayground();
-  gpTip = new GoPlayground("https://gotipplay.golang.org");
-  gp = gpOriginal;
-}
-
 // CodeMirror editor setup
-const gpBody = document.getElementById("gpBody") as HTMLTextAreaElement;
-const editor = window.CodeMirror.fromTextArea(gpBody, {
+const jsBody = document.getElementById("jsBody") as HTMLTextAreaElement;
+const editor = window.CodeMirror.fromTextArea(jsBody, {
   lineNumbers: true,
-  mode: "text/x-go",
-  tabSize: 8,
-  indentUnit: 8,
-  indentWithTabs: true,
+  mode: "javascript",
+  tabSize: 2,
+  indentUnit: 2,
+  indentWithTabs: false,
   matchBrackets: true,
 });
 window.editor = editor;
 
 // Options management
-const optionsStr: string | null = window.localStorage.getItem("goplayground-options");
-const optionKeys: (keyof GoPlaygroundOptions)[] = ["goimports", "vimMode", "tabSize"];
-const defaultOptions: GoPlaygroundOptions = {
-  goimports: false,
+const optionsStr: string | null = window.localStorage.getItem("jsplayground-options");
+const optionKeys: (keyof JsPlaygroundOptions)[] = ["vimMode", "tabSize"];
+const defaultOptions: JsPlaygroundOptions = {
   vimMode: false,
-  tabSize: 8,
+  tabSize: 2,
 };
-const parsedOptions: Partial<GoPlaygroundOptions> = optionsStr ? JSON.parse(optionsStr) : {};
-const options: GoPlaygroundOptions =
+const parsedOptions: Partial<JsPlaygroundOptions> = optionsStr ? JSON.parse(optionsStr) : {};
+const options: JsPlaygroundOptions =
   optionKeys.length === Object.keys(parsedOptions).length
-    ? parsedOptions as GoPlaygroundOptions
+    ? parsedOptions as JsPlaygroundOptions
     : defaultOptions;
 
 // DOM elements
-const gpResult = document.getElementById("gpResult") as HTMLDivElement;
-const gpOptions = document.getElementById("gpOptions") as HTMLDivElement;
-const gpRunBtn = document.getElementById("gpRunBtn") as HTMLButtonElement;
-const gpFmtBtn = document.getElementById("gpFmtBtn") as HTMLButtonElement;
-const gpShareBtn = document.getElementById("gpShareBtn") as HTMLButtonElement;
+const jsResult = document.getElementById("jsResult") as HTMLDivElement;
+const jsOptions = document.getElementById("jsOptions") as HTMLDivElement;
+const jsRunBtn = document.getElementById("jsRunBtn") as HTMLButtonElement;
+
+// iframe sandbox executor
+const executor = new IframeSandboxExecutor(document.body);
 
 // Utility functions
 const createLine = (kind: string, message: string): HTMLDivElement => {
@@ -94,91 +70,37 @@ const createLine = (kind: string, message: string): HTMLDivElement => {
   return line;
 };
 
-const createLink = (url: string): HTMLDivElement => {
-  const div = document.createElement("div");
-  const link = document.createElement("a");
-  link.textContent = url;
-  link.href = url;
-  link.target = "_blank";
-  div.appendChild(link);
-  return div;
-};
-
-const waitingMsg = "Waiting for remote server...";
-
-// Go Playground functions
-async function executeRun(): Promise<void> {
-  if (!gp) return;
+// JavaScript execution via iframe sandbox
+function executeRun(): void {
   editor.save();
-  gpResult.textContent = waitingMsg;
-  const result: GoPlaygroundResult = await gp.compile(gpBody.value);
-  gpResult.textContent = "";
-  if (result.Errors !== "") {
-    const line = createLine("stderr", result.Errors);
-    gpResult.appendChild(line);
-    return;
-  }
-  for (const event of result.Events) {
-    const line = createLine(event.Kind, event.Message);
-    gpResult.appendChild(line);
-  }
-  gpResult.appendChild(
-    createLine(
-      "system",
-      `
-Program exited.`
-    )
-  );
+  jsResult.textContent = "";
+
+  executor.onOutput((msg: ExecutionMessage) => {
+    if (msg.type === "console") {
+      const kind = msg.level === "error" ? "stderr" : "stdout";
+      const text = (msg.args ?? []).join(" ");
+      const line = createLine(kind, text);
+      jsResult.appendChild(line);
+    } else if (msg.type === "error") {
+      const line = createLine("stderr", msg.message ?? "Unknown error");
+      jsResult.appendChild(line);
+    } else if (msg.type === "complete") {
+      jsResult.appendChild(
+        createLine("system", "\nProgram exited.")
+      );
+    }
+  });
+
+  executor.execute(jsBody.value);
 }
 
-async function executeFmt(): Promise<void> {
-  if (!gp) return;
-  editor.save();
-  gpResult.textContent = waitingMsg;
-  const result: GoPlaygroundFormatResult = await gp.format(gpBody.value, options.goimports);
-  gpResult.textContent = "";
-  if (result.Error !== "") {
-    const line = createLine("stderr", result.Error);
-    gpResult.appendChild(line);
-    return;
-  }
-  gpBody.value = result.Body;
-  editor.setValue(result.Body);
-}
-
-function genShareQuery(key: string): string {
-  const query = `?p=${key}`;
-  if ((options as any).gotip) {
-    return query + "&gotip=on";
-  }
-  return query;
-}
-
-async function executeShare(): Promise<void> {
-  if (!gp) return;
-  editor.save();
-  gpResult.textContent = waitingMsg;
-  const result: string = await gp.share(gpBody.value);
-  console.log({ result });
-  gpResult.innerHTML = "";
-  gpResult.appendChild(createLink(`https://go.dev/play/p/${result}`));
-}
-
-// Event listeners for Go Playground
-gpRunBtn.addEventListener("click", () => executeRun());
-gpFmtBtn.addEventListener("click", () => executeFmt());
-gpShareBtn.addEventListener("click", () => executeShare());
+// Event listeners
+jsRunBtn.addEventListener("click", () => executeRun());
 
 window.addEventListener("keypress", (e: KeyboardEvent) => {
-  if (e.key === "Enter") {
-    if (e.shiftKey) {
-      e.preventDefault();
-      executeRun();
-    }
-    if (e.ctrlKey) {
-      e.preventDefault();
-      executeFmt();
-    }
+  if (e.key === "Enter" && e.shiftKey) {
+    e.preventDefault();
+    executeRun();
   }
 });
 
@@ -189,43 +111,12 @@ function applyOptions(): void {
   editor.setOption("indentUnit", options.tabSize);
 }
 
-// initialize gotipEnabled
-const urlParams: URLSearchParams = new URLSearchParams(window.location.search);
-let gotipEnabled: boolean = urlParams.get("v") === "gotip";
-
-const goVersionSelect = document.getElementById("goVersion") as HTMLSelectElement;
-goVersionSelect.value = gotipEnabled ? "gotip" : "gorelease";
-
-function applyGotipOption(): void {
-  const urlParams = new URLSearchParams(window.location.search);
-  if (gotipEnabled) {
-    urlParams.set("v", "gotip");
-    gp = gpTip;
-  } else {
-    urlParams.delete("v");
-    gp = gpOriginal;
-  }
-  const search: string = urlParams.toString();
-  const url: URL = new URL(window.location.href);
-  if (search) {
-    url.search = `?${search}`;
-  } else {
-    url.search = "";
-  }
-  window.history.replaceState(null, "", url);
-}
-
-goVersionSelect.addEventListener("change", () => {
-  gotipEnabled = goVersionSelect.value === "gotip";
-  applyGotipOption();
-});
-
 function initOptionsForm(): void {
-  const gpOptionsForm = document.getElementById("gpOptionsForm") as HTMLFormElement;
-  window.gpOptionsForm = gpOptionsForm;
+  const jsOptionsForm = document.getElementById("jsOptionsForm") as HTMLFormElement;
+  window.jsOptionsForm = jsOptionsForm;
 
   for (const key of optionKeys) {
-    const input = (gpOptionsForm as any)[key] as HTMLInputElement;
+    const input = (jsOptionsForm as any)[key] as HTMLInputElement;
     const value = options[key];
     if (input.type === "checkbox") {
       input.checked = value as boolean;
@@ -234,10 +125,10 @@ function initOptionsForm(): void {
     input.value = value.toString();
   }
 
-  gpOptionsForm.addEventListener("submit", (e: Event) => {
+  jsOptionsForm.addEventListener("submit", (e: Event) => {
     e.preventDefault();
     for (const key of optionKeys) {
-      const input = (gpOptionsForm as any)[key] as HTMLInputElement;
+      const input = (jsOptionsForm as any)[key] as HTMLInputElement;
       if (input.type === "checkbox") {
         (options as any)[key] = input.checked;
         continue;
@@ -250,7 +141,7 @@ function initOptionsForm(): void {
     }
     applyOptions();
     window.localStorage.setItem(
-      "goplayground-options",
+      "jsplayground-options",
       JSON.stringify(options)
     );
   });
@@ -258,27 +149,26 @@ function initOptionsForm(): void {
   applyOptions();
 }
 
-const gpOptionsBtn = document.getElementById("gpOptionsBtn") as HTMLButtonElement;
-gpOptionsBtn.addEventListener("click", () => {
+const jsOptionsBtn = document.getElementById("jsOptionsBtn") as HTMLButtonElement;
+jsOptionsBtn.addEventListener("click", () => {
   const closedLabel = "Options";
   const openedLabel = "Hide Options";
-  if (gpOptionsBtn.textContent === closedLabel) {
-    gpOptionsBtn.textContent = openedLabel;
-    gpOptions.classList.remove("hidden");
-    gpResult.classList.add("hidden");
+  if (jsOptionsBtn.textContent === closedLabel) {
+    jsOptionsBtn.textContent = openedLabel;
+    jsOptions.classList.remove("hidden");
+    jsResult.classList.add("hidden");
     return;
   }
-  gpOptionsBtn.textContent = closedLabel;
-  gpResult.classList.remove("hidden");
-  gpOptions.classList.add("hidden");
+  jsOptionsBtn.textContent = closedLabel;
+  jsResult.classList.remove("hidden");
+  jsOptions.classList.add("hidden");
 });
 
 // Yjs collaborative editing setup
 function initCollaborativeEditing(): void {
   // Get room information from global variables set in template
   const roomId: string = window.roomId;
-  const sharedContentId: string = window.sharedContentId;
-  
+
   if (!roomId) {
     console.log('No roomId found, skipping collaborative editing setup');
     return;
@@ -290,7 +180,7 @@ function initCollaborativeEditing(): void {
   // So for /yjs/roomId, we need baseUrl='/yjs' and roomname=roomId
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const wsUrl: string = `${protocol}//${window.location.host}/yjs`;
-  
+
   // This will create WebSocket connection to: /yjs/roomId (correct format)
   const provider: WebsocketProvider = new WebsocketProvider(wsUrl, roomId, ydoc);
   const ytext: Y.Text = ydoc.getText('codemirror');
@@ -302,37 +192,13 @@ function initCollaborativeEditing(): void {
     color: '#' + Math.floor(Math.random() * 16777215).toString(16)
   });
 
-  // Load shared content if provided
-  if (sharedContentId && sharedContentId.trim() !== '') {
-    console.log(`Loading shared content: ${sharedContentId}`);
-    
-    // Wait for provider to be connected before sending load request
-    provider.on('status', (event: { status: string }) => {
-      if (event.status === 'connected') {
-        // Send message to Durable Object to load shared content
-        const loadMessage = JSON.stringify({
-          type: 'load-shared-content',
-          sharedContentId: sharedContentId
-        });
-        
-        // Get the WebSocket from the provider and send the custom message
-        const ws = (provider as any).ws;
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(loadMessage);
-        }
-      }
-    });
-  }
-
   console.log('yjs collaborative editing initialized');
 }
 
 // Initialize everything when DOM is loaded
 function init(): void {
-  initGoPlayground();
-  applyGotipOption();
   initOptionsForm();
-  
+
   // Wait for CodeMirror to be fully initialized
   setTimeout(() => {
     initCollaborativeEditing();
