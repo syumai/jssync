@@ -84,7 +84,7 @@ header {
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  background-color: #007d9c;
+  background-color: #ff8d11;
   color: #fff;
 }
 
@@ -132,13 +132,13 @@ button {
   box-sizing: border-box;
   border: none;
   background-color: #f7f9fa;
-  color: #007d9c;
+  color: #f27b10;
   font: bold 0.875rem Roboto, sans-serif;
 }
 
 button.primary {
   padding: 3px 14px;
-  border: 0.0625rem solid #00add8;
+  border: 0.0625rem solid #ff8d11;
   background-color: #ffffdd;
 }
 
