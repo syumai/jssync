@@ -39,6 +39,9 @@ export default {
   devtool: 'source-map',
   resolve: {
     extensions: ['.ts', '.js'],
+    alias: {
+      'yjs': path.resolve(__dirname, 'node_modules/yjs'),
+    },
     fallback: {
       "crypto": false,
       "stream": false,
