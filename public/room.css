@@ -45,7 +45,7 @@
 
 .CodeMirror {
   border: 0.0625rem solid #c0c2c3;
-  background-color: #ffd;
+  background-color: #fff;
   font-size: 11pt;
   font-family: Menlo, monospace;
   height: calc(100% - 300px);
@@ -139,7 +139,7 @@ button {
 button.primary {
   padding: 3px 14px;
   border: 0.0625rem solid #ff8d11;
-  background-color: #ffffdd;
+  background-color: #fff;
 }
 
 header .link-to-github {
