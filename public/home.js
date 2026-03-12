@@ -10,9 +10,5 @@ joinForm.addEventListener("submit", (e) => {
   if (roomId === "") {
     roomId = generatedId;
   }
-  let roomUri = `/rooms/${roomId}`;
-  if (sharedContentId) {
-    roomUri += `/p/${sharedContentId}`;
-  }
-  window.location.href = roomUri;
+  window.location.href = `/rooms/${roomId}`;
 });
