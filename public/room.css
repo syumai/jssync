@@ -45,7 +45,7 @@
 
 .CodeMirror {
   border: 0.0625rem solid #c0c2c3;
-  background-color: #fff;
+  background-color: #f8f8f8;
   font-size: 11pt;
   font-family: Menlo, monospace;
   height: calc(100% - 300px);
