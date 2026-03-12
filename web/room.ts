@@ -4,7 +4,7 @@
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { CodemirrorBinding } from 'y-codemirror';
-import { IframeSandboxExecutor, ExecutionMessage } from './js-executor.js';
+import { IframeSandboxExecutor, ExecutionMessage } from './js-executor';
 
 // Type declarations for global objects and interfaces
 interface JsPlaygroundOptions {
