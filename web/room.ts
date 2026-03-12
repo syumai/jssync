@@ -97,10 +97,53 @@ function executeRun(): void {
 // Event listeners
 jsRunBtn.addEventListener("click", () => executeRun());
 
+// Confirmation modal for Shift+Enter execution
+const jsConfirmModal = document.getElementById("jsConfirmModal") as HTMLDivElement;
+const jsConfirmRun = document.getElementById("jsConfirmRun") as HTMLButtonElement;
+const jsConfirmCancel = document.getElementById("jsConfirmCancel") as HTMLButtonElement;
+const modalBackdrop = jsConfirmModal.querySelector(".modal-backdrop") as HTMLDivElement;
+
+function showConfirmModal(): void {
+  jsConfirmModal.classList.remove("hidden");
+  jsConfirmRun.focus();
+
+  const onConfirm = () => {
+    hideConfirmModal();
+    executeRun();
+  };
+
+  const onCancel = () => {
+    hideConfirmModal();
+  };
+
+  const onKeydown = (e: KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      onConfirm();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      onCancel();
+    }
+  };
+
+  function hideConfirmModal(): void {
+    jsConfirmModal.classList.add("hidden");
+    jsConfirmRun.removeEventListener("click", onConfirm);
+    jsConfirmCancel.removeEventListener("click", onCancel);
+    modalBackdrop.removeEventListener("click", onCancel);
+    window.removeEventListener("keydown", onKeydown);
+  }
+
+  jsConfirmRun.addEventListener("click", onConfirm);
+  jsConfirmCancel.addEventListener("click", onCancel);
+  modalBackdrop.addEventListener("click", onCancel);
+  window.addEventListener("keydown", onKeydown);
+}
+
 window.addEventListener("keypress", (e: KeyboardEvent) => {
   if (e.key === "Enter" && e.shiftKey) {
     e.preventDefault();
-    executeRun();
+    showConfirmModal();
   }
 });
 
