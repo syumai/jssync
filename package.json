@@ -1,9 +1,9 @@
 {
-  "name": "gpsync",
+  "name": "jssync",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "A multi-person editable version of The Go Playground.",
+  "description": "A collaborative real-time JavaScript Playground with coedit mode.",
   "main": "src/worker.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -18,17 +18,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/syumai/gpsync.git"
+    "url": "git+https://github.com/syumai/jssync.git"
   },
   "author": "syumai",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/syumai/gpsync/issues"
+    "url": "https://github.com/syumai/jssync/issues"
   },
-  "homepage": "https://github.com/syumai/gpsync#readme",
+  "homepage": "https://github.com/syumai/jssync#readme",
   "dependencies": {
-    "@syumai/goplayground": "^0.1.6",
     "hono": "^4.7.11",
+    "y-websocket": "^3.0.0",
     "lib0": "^0.2.114",
     "y-codemirror": "^3.0.1",
     "y-durableobjects": "^0.2.0",
