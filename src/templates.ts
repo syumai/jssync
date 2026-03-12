@@ -47,7 +47,7 @@ export const roomTemplate = (data: RoomTemplateData): string => {
 <!-- Original contents is available on https://github.com/syumai/jssync -->
 <html>
 <head>
-  <title>JavaScript Playground - with coedit mode -</title>
+  <title>JavaScript Playground</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.58.3/lib/codemirror.css" integrity="sha256-0wqkEinay6WmMf1F6gVEv9sHx4mSggtnkAsQm1cJX7I=" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize-css@2.3.1/normalize.css" integrity="sha256-oQhE1gzQ/RLRlHgKfVUhrAe03FJbQLmTjY5ngEJPhdg=" crossorigin="anonymous">
   <link rel="stylesheet" href="/room.css">
@@ -57,7 +57,6 @@ export const roomTemplate = (data: RoomTemplateData): string => {
 <body>
   <header>
     <div class="title">JavaScript Playground</div>
-    <div class="subtitle">- with coedit mode -</div>
     <div class="header-content">
       <div class="button-container">
         <button id="jsRunBtn" class="primary">Run</button>
