@@ -1,15 +1,8 @@
-export interface HomeTemplateData {
-  sharedContentId: string;
-}
-
 export interface RoomTemplateData {
   roomId: string;
-  sharedContentId: string;
 }
 
-export const homeTemplate = (data: HomeTemplateData): string => {
-  const { sharedContentId } = data;
-  
+export const homeTemplate = (): string => {
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -42,16 +35,13 @@ export const homeTemplate = (data: HomeTemplateData): string => {
       </div>
     </div>
   </div>
-  <script>
-    const sharedContentId = "${sharedContentId}";
-  </script>
   <script type="module" src="/home.js"></script>
 </body>
 </html>`;
 };
 
 export const roomTemplate = (data: RoomTemplateData): string => {
-  const { roomId, sharedContentId } = data;
+  const { roomId } = data;
   
   return `<!DOCTYPE html>
 <!-- Original contents is available on https://github.com/syumai/go-playground-custom -->
@@ -118,7 +108,6 @@ export const roomTemplate = (data: RoomTemplateData): string => {
   <script>
     // Set global variables for the bundled JavaScript
     window.roomId = "${roomId}";
-    window.sharedContentId = "${sharedContentId}";
   </script>
   <script src="/dist/room.bundle.js"></script>
 </body>

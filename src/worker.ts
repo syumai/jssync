@@ -1,32 +1,29 @@
 import { Hono } from "hono";
 import { yRoute } from "y-durableobjects";
-import { serveStatic } from "hono/cloudflare-workers";
-import { GPSyncDurableObject, GPSyncEnv } from "./gpsync-durable-object.js";
-import { 
-  validateRoomId, 
-  validateSharedContentIdLength,
-  InvalidArgumentError 
+import { JsSyncDurableObject, JsSyncEnv } from "./jssync-durable-object.js";
+import {
+  validateRoomId,
+  InvalidArgumentError
 } from "./validators.js";
 import { homeTemplate, roomTemplate } from "./templates.js";
 
-type Env = GPSyncEnv;
+type Env = JsSyncEnv;
 
 const app = new Hono<{ Bindings: Env }>();
 
 // Serve static assets using the ASSETS binding
 app.get("/*", async (c, next) => {
   const url = new URL(c.req.url);
-  
+
   // Skip API routes and specific application routes
-  if (url.pathname.startsWith("/yjs/") || 
+  if (url.pathname.startsWith("/yjs/") ||
       url.pathname.startsWith("/rooms/") ||
-      url.pathname.startsWith("/p/") ||
       url.pathname.startsWith("/health") ||
       url.pathname === "/") {
     await next();
     return;
   }
-  
+
   // Try to serve static asset
   try {
     return await c.env.ASSETS.fetch(c.req.raw);
@@ -36,65 +33,32 @@ app.get("/*", async (c, next) => {
   }
 });
 
-// Home route handlers
+// Home route handler
 app.get("/", (c) => {
-  const html = homeTemplate({ sharedContentId: "" });
+  const html = homeTemplate();
   return c.html(html);
 });
 
-app.get("/p/:sharedContentId", (c) => {
-  const { sharedContentId } = c.req.param();
-  
-  try {
-    validateSharedContentIdLength(sharedContentId);
-    const html = homeTemplate({ sharedContentId });
-    return c.html(html);
-  } catch (error) {
-    if (error instanceof InvalidArgumentError) {
-      return c.text(error.message, 400);
-    }
-    console.error("Error handling shared content request:", error);
-    return c.text("Internal Server Error", 500);
-  }
-});
-
-// Room route handlers
+// Room route handler
 app.get("/rooms/:roomId", (c) => {
   const { roomId } = c.req.param();
-  
-  try {
-    validateRoomId(roomId);
-    const html = roomTemplate({ roomId, sharedContentId: "" });
-    return c.html(html);
-  } catch (error) {
-    if (error instanceof InvalidArgumentError) {
-      return c.text(error.message, 400);
-    }
-    console.error("Error handling shared content request:", error);
-    return c.text("Internal Server Error", 500);
-  }
-});
 
-app.get("/rooms/:roomId/p/:sharedContentId", (c) => {
-  const { roomId, sharedContentId } = c.req.param();
-  
   try {
     validateRoomId(roomId);
-    validateSharedContentIdLength(sharedContentId);
-    const html = roomTemplate({ roomId, sharedContentId });
+    const html = roomTemplate({ roomId });
     return c.html(html);
   } catch (error) {
     if (error instanceof InvalidArgumentError) {
       return c.text(error.message, 400);
     }
-    console.error("Error handling shared content request:", error);
+    console.error("Error handling room request:", error);
     return c.text("Internal Server Error", 500);
   }
 });
 
 // Y.js WebSocket route using y-durableobjects
 // This handles WebSocket upgrades for room collaboration
-const yjsRoute = yRoute<{ Bindings: Env }>((env: Env) => env.GPSYNC_ROOMS);
+const yjsRoute = yRoute<{ Bindings: Env }>((env: Env) => env.JSSYNC_ROOMS);
 app.route("/yjs", yjsRoute);
 
 // Health check endpoint
@@ -114,4 +78,4 @@ app.onError((error, c) => {
 });
 
 export default app;
-export { GPSyncDurableObject };
+export { JsSyncDurableObject };
