@@ -27,23 +27,23 @@
   },
   "homepage": "https://github.com/syumai/jssync#readme",
   "dependencies": {
-    "hono": "^4.7.11",
-    "y-websocket": "^3.0.0",
-    "lib0": "^0.2.114",
+    "hono": "^4.12.7",
+    "lib0": "^0.2.117",
     "y-codemirror": "^3.0.1",
-    "y-durableobjects": "^0.2.0",
-    "y-protocols": "^1.0.6",
-    "yjs": "^13.6.27"
+    "y-durableobjects": "^0.2.2",
+    "y-protocols": "^1.0.7",
+    "y-websocket": "^3.0.0",
+    "yjs": "^13.6.29"
   },
   "devDependencies": {
-    "@babel/core": "^7.28.0",
-    "@babel/preset-env": "^7.28.0",
-    "@cloudflare/workers-types": "^4.20241218.0",
-    "babel-loader": "^10.0.0",
-    "ts-loader": "^9.5.2",
-    "typescript": "^5.9.2",
-    "webpack": "^5.101.0",
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.0",
+    "@cloudflare/workers-types": "^4.20260312.1",
+    "babel-loader": "^10.1.1",
+    "ts-loader": "^9.5.4",
+    "typescript": "^5.9.3",
+    "webpack": "^5.105.4",
     "webpack-cli": "^6.0.1",
-    "wrangler": "^4.28.1"
+    "wrangler": "^4.72.0"
   }
 }
