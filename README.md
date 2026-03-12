@@ -1,26 +1,21 @@
-# gpsync
+# jssync
 
-A collaborative real-time code editor based on The Go Playground. Allows multiple users to simultaneously edit Go code in shared rooms using Yjs for real-time collaboration.
+A collaborative real-time JavaScript Playground. Allows multiple users to simultaneously edit and run JavaScript code in shared rooms using Yjs for real-time collaboration.
 
 ## Demo
 
-https://gpsync.syumai.workers.dev/
+https://jssync.syumai.workers.dev/
 
 ### Features
 
 ```console
 # Open room
-https://gpsync.syumai.workers.dev/rooms/:roomId
-
-# Use shared content to create room
-https://gpsync.syumai.workers.dev/p/:sharedContentId
-
-# Open room with shared content
-https://gpsync.syumai.workers.dev/rooms/:roomId/p/:sharedContentId
+https://jssync.syumai.workers.dev/rooms/:roomId
 ```
 
-* shared content ID can be gotten by Go Playground's `share` function.
-  - example: https://gpsync.syumai.workers.dev/rooms/exampleRoom/p/xXqRTAb2hu7
+* JavaScript code execution in sandboxed iframe
+* Real-time collaborative editing with multiple cursors
+* Vim mode and tab width options
 
 ## Usage
 
@@ -63,11 +58,11 @@ npx tsc --noEmit -p tsconfig.client.json   # Client-side
 * **Framework**: Hono with HTML templating
 * **Real-time**: Yjs with [y-durableobjects](https://github.com/napolab/y-durableobjects)
 * **Persistence**: Cloudflare Durable Objects
-* **Go Integration**: [@syumai/goplayground](https://github.com/syumai/goplayground-js) via direct API calls
 * **Language**: TypeScript with ES modules
 
 ### Frontend
 * **Editor**: CodeMirror with y-codemirror for Yjs integration
+* **JS Execution**: Sandboxed iframe with `sandbox="allow-scripts"`
 * **Real-time**: Yjs client libraries (yjs, y-protocols, lib0)
 * **Build**: Webpack 5 with TypeScript and Babel loaders
 * **Language**: TypeScript
@@ -88,8 +83,6 @@ Collaborative editing is powered by Yjs for conflict-free replicated data types 
 
 ## References
 
-* Original `The Go Playground` by Go team
-  - https://play.golang.org/
 * [Yjs](https://github.com/yjs/yjs) - Shared data types for building collaborative software
 * Base Idea from ttakuru88: https://github.com/ttakuru88/ot_sample
   - Blog: https://kray.jp/blog/algorithm-operational-transformation/
