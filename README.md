@@ -83,6 +83,7 @@ Collaborative editing is powered by Yjs for conflict-free replicated data types 
 
 ## References
 
+* Based on [gpsync](https://github.com/syumai/gpsync) - A collaborative real-time Go Playground
 * [Yjs](https://github.com/yjs/yjs) - Shared data types for building collaborative software
 * Base Idea from ttakuru88: https://github.com/ttakuru88/ot_sample
   - Blog: https://kray.jp/blog/algorithm-operational-transformation/
