@@ -93,13 +93,8 @@ function executeRunWithCode(code: string): void {
   executor.execute(code);
 }
 
-function executeRun(): void {
-  editor.save();
-  executeRunWithCode(jsBody.value);
-}
-
 // Event listeners
-jsRunBtn.addEventListener("click", () => executeRun());
+jsRunBtn.addEventListener("click", () => showConfirmModal());
 
 // Confirmation modal for Shift+Enter execution
 const jsConfirmModal = document.getElementById("jsConfirmModal") as HTMLDivElement;
@@ -121,6 +116,7 @@ function showConfirmModal(): void {
   const onConfirm = () => {
     hideConfirmModal();
     executeRunWithCode(codeSnapshot);
+    editor.focus();
   };
 
   const onCancel = () => {

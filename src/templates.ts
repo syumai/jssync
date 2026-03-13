@@ -92,11 +92,12 @@ export const roomTemplate = (data: RoomTemplateData): string => {
   <div id="jsConfirmModal" class="modal hidden">
     <div class="modal-backdrop"></div>
     <div class="modal-content">
-      <p>このコードを実行します</p>
+      <p>Run this code?</p>
+      <p class="modal-note">This code will be executed in your browser.</p>
       <pre class="modal-code-preview"><code id="jsConfirmCode"></code></pre>
       <div class="modal-buttons">
-        <button id="jsConfirmRun" class="primary">実行</button>
-        <button id="jsConfirmCancel">キャンセル</button>
+        <button id="jsConfirmRun" class="primary">Run</button>
+        <button id="jsConfirmCancel">Cancel</button>
       </div>
     </div>
   </div>

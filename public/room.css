@@ -248,6 +248,13 @@ main {
   flex-shrink: 0;
 }
 
+.modal-note {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0 0 16px;
+  flex-shrink: 0;
+}
+
 .modal-code-preview {
   flex: 1;
   min-height: 0;
