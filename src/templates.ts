@@ -59,7 +59,7 @@ export const roomTemplate = (data: RoomTemplateData): string => {
     <div class="title">JavaScript Playground</div>
     <div class="header-content">
       <div class="button-container">
-        <button id="jsRunBtn" class="primary">Run</button>
+        <button id="jsRunBtn" class="primary">Run <kbd>(Shift+Enter)</kbd></button>
         <button id="jsOptionsBtn">Options</button>
       </div>
       <div class="link-to-github">
@@ -96,7 +96,7 @@ export const roomTemplate = (data: RoomTemplateData): string => {
       <p class="modal-note">This code will be executed in your browser.</p>
       <pre class="modal-code-preview"><code id="jsConfirmCode"></code></pre>
       <div class="modal-buttons">
-        <button id="jsConfirmRun" class="primary">Run</button>
+        <button id="jsConfirmRun" class="primary">Run <kbd>(Enter)</kbd></button>
         <button id="jsConfirmCancel">Cancel</button>
       </div>
     </div>
