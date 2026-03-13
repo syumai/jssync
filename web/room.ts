@@ -71,8 +71,7 @@ const createLine = (kind: string, message: string): HTMLDivElement => {
 };
 
 // JavaScript execution via iframe sandbox
-function executeRun(): void {
-  editor.save();
+function executeRunWithCode(code: string): void {
   jsResult.textContent = "";
 
   executor.onOutput((msg: ExecutionMessage) => {
@@ -91,7 +90,12 @@ function executeRun(): void {
     }
   });
 
-  executor.execute(jsBody.value);
+  executor.execute(code);
+}
+
+function executeRun(): void {
+  editor.save();
+  executeRunWithCode(jsBody.value);
 }
 
 // Event listeners
@@ -101,15 +105,22 @@ jsRunBtn.addEventListener("click", () => executeRun());
 const jsConfirmModal = document.getElementById("jsConfirmModal") as HTMLDivElement;
 const jsConfirmRun = document.getElementById("jsConfirmRun") as HTMLButtonElement;
 const jsConfirmCancel = document.getElementById("jsConfirmCancel") as HTMLButtonElement;
+const jsConfirmCode = document.getElementById("jsConfirmCode") as HTMLElement;
 const modalBackdrop = jsConfirmModal.querySelector(".modal-backdrop") as HTMLDivElement;
 
 function showConfirmModal(): void {
+  // Take a snapshot of the current code
+  editor.save();
+  const codeSnapshot = jsBody.value;
+
+  // Display the snapshot in the modal
+  jsConfirmCode.textContent = codeSnapshot;
   jsConfirmModal.classList.remove("hidden");
   jsConfirmRun.focus();
 
   const onConfirm = () => {
     hideConfirmModal();
-    executeRun();
+    executeRunWithCode(codeSnapshot);
   };
 
   const onCancel = () => {

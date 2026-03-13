@@ -93,6 +93,7 @@ export const roomTemplate = (data: RoomTemplateData): string => {
     <div class="modal-backdrop"></div>
     <div class="modal-content">
       <p>このコードを実行します</p>
+      <pre class="modal-code-preview"><code id="jsConfirmCode"></code></pre>
       <div class="modal-buttons">
         <button id="jsConfirmRun" class="primary">実行</button>
         <button id="jsConfirmCancel">キャンセル</button>

@@ -235,15 +235,41 @@ main {
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   text-align: center;
+  width: calc(100% - 48px);
+  max-height: calc(100% - 48px);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
 .modal-content p {
   margin: 0 0 16px;
   font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.modal-code-preview {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin: 0 0 16px;
+  padding: 12px;
+  background-color: #f8f8f8;
+  border: 1px solid #c0c2c3;
+  border-radius: 4px;
+  text-align: left;
+  white-space: pre;
+  font-family: Menlo, monospace;
+  font-size: 11pt;
+}
+
+.modal-code-preview code {
+  display: block;
 }
 
 .modal-buttons {
   display: flex;
   justify-content: center;
   gap: 12px;
+  flex-shrink: 0;
 }
