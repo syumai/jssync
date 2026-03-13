@@ -1,27 +1,28 @@
 /**
- * iframe sandbox による JavaScript コード実行モジュール
+ * JavaScript code execution module using iframe sandbox
  *
- * 各実行時に既存の iframe を除去し、sandbox="allow-scripts" 属性付きの
- * 新規 iframe を srcdoc で生成する。iframe 内で console メソッドを
- * オーバーライドし postMessage で親ページに結果を送信する。
+ * On each execution, removes the existing iframe and creates a new one
+ * with the sandbox="allow-scripts" attribute via srcdoc. Console methods
+ * are overridden inside the iframe to send results to the parent page
+ * via postMessage.
  */
 
-/** iframe から親ページへ送信されるメッセージの型 */
+/** Message type sent from iframe to parent page */
 export type ExecutionMessage =
   | { type: "console"; level: "log" | "error" | "warn" | "info"; args: string[] }
   | { type: "error"; message: string }
   | { type: "complete" };
 
-/** 実行結果コールバック型 */
+/** Execution result callback type */
 export type OutputCallback = (message: ExecutionMessage) => void;
 
-/** タイムアウト時間 (ミリ秒) */
+/** Timeout duration (milliseconds) */
 const EXECUTION_TIMEOUT_MS = 5000;
 
 /**
- * srcdoc として使用する HTML を生成する。
- * iframe 内で console メソッドをオーバーライドし、
- * postMessage で親ページに出力を送信する。
+ * Generates HTML to be used as srcdoc.
+ * Overrides console methods inside the iframe and sends
+ * output to the parent page via postMessage.
  */
 function buildSrcdoc(code: string): string {
   return `<!DOCTYPE html>
@@ -30,7 +31,7 @@ function buildSrcdoc(code: string): string {
 <body>
 <script>
 (function() {
-  // console メソッドのオーバーライド
+  // Override console methods
   var levels = ["log", "error", "warn", "info"];
   for (var i = 0; i < levels.length; i++) {
     (function(level) {
@@ -52,7 +53,7 @@ function buildSrcdoc(code: string): string {
     })(levels[i]);
   }
 
-  // ランタイムエラーのキャプチャ
+  // Capture runtime errors
   window.onerror = function(message) {
     window.parent.postMessage({
       type: "error",
@@ -61,7 +62,7 @@ function buildSrcdoc(code: string): string {
   };
 
   try {
-    // ユーザーコードを実行
+    // Execute user code
     (0, eval)(${JSON.stringify(code)});
   } catch (e) {
     window.parent.postMessage({
@@ -70,7 +71,7 @@ function buildSrcdoc(code: string): string {
     }, "*");
   }
 
-  // 実行完了を通知
+  // Notify execution complete
   window.parent.postMessage({ type: "complete" }, "*");
 })();
 </script>
@@ -79,10 +80,10 @@ function buildSrcdoc(code: string): string {
 }
 
 /**
- * IframeSandboxExecutor クラス
+ * IframeSandboxExecutor class
  *
- * iframe sandbox 内で JavaScript コードを実行し、
- * postMessage 経由で結果を受信して呼び出し元に通知する。
+ * Executes JavaScript code inside an iframe sandbox and receives
+ * results via postMessage to notify the caller.
  */
 export class IframeSandboxExecutor {
   private iframe: HTMLIFrameElement | null = null;
@@ -95,26 +96,26 @@ export class IframeSandboxExecutor {
     this.container = container;
   }
 
-  /** 実行結果コールバックを設定する */
+  /** Set the execution result callback */
   onOutput(callback: OutputCallback): void {
     this.callback = callback;
   }
 
-  /** エディタのコードを iframe sandbox 内で実行する */
+  /** Execute editor code inside an iframe sandbox */
   execute(code: string): void {
-    // 既存の実行を破棄
+    // Destroy existing execution
     this.destroy();
 
-    // 新規 iframe を生成
+    // Create new iframe
     const iframe = document.createElement("iframe");
     iframe.sandbox.add("allow-scripts");
     iframe.style.display = "none";
     iframe.srcdoc = buildSrcdoc(code);
     this.iframe = iframe;
 
-    // message イベントリスナーを設定
+    // Set up message event listener
     const handler = (event: MessageEvent) => {
-      // event.source が管理対象 iframe であることを確認
+      // Verify event.source is the managed iframe
       if (!this.iframe || event.source !== this.iframe.contentWindow) {
         return;
       }
@@ -128,7 +129,7 @@ export class IframeSandboxExecutor {
         this.callback(data);
       }
 
-      // 実行完了時にタイムアウトをクリア
+      // Clear timeout on execution complete
       if (data.type === "complete") {
         this.clearTimeout();
       }
@@ -136,7 +137,7 @@ export class IframeSandboxExecutor {
     this.messageHandler = handler;
     window.addEventListener("message", handler);
 
-    // タイムアウトを設定
+    // Set timeout
     this.timeoutId = window.setTimeout(() => {
       if (this.callback) {
         this.callback({
@@ -150,11 +151,11 @@ export class IframeSandboxExecutor {
       this.destroy();
     }, EXECUTION_TIMEOUT_MS);
 
-    // iframe を DOM に追加して実行開始
+    // Append iframe to DOM to start execution
     this.container.appendChild(iframe);
   }
 
-  /** 現在の実行 iframe を破棄する */
+  /** Destroy the current execution iframe */
   destroy(): void {
     this.clearTimeout();
 
@@ -169,7 +170,7 @@ export class IframeSandboxExecutor {
     }
   }
 
-  /** タイムアウトタイマーをクリアする */
+  /** Clear the timeout timer */
   private clearTimeout(): void {
     if (this.timeoutId !== null) {
       window.clearTimeout(this.timeoutId);
