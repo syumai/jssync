@@ -17,8 +17,6 @@ pnpm install
 
 # Start the development server (Cloudflare Workers with Wrangler)
 npm run cf:dev
-# or
-make dev
 # Application runs on http://localhost:8787 by default
 ```
 
@@ -37,8 +35,8 @@ npm run serve
 ### Deployment
 ```bash
 # Deploy to Cloudflare Workers
-make deploy
-# This runs: npm run cf:deploy (which runs npm run build && wrangler deploy)
+npm run cf:deploy
+# This runs: npm run build && wrangler deploy
 
 # Development deployment with Wrangler
 npm run wrangler:dev

@@ -24,9 +24,7 @@ https://jssync.syumai.workers.dev/rooms/:roomId
 pnpm install
 
 # Start the development server (Cloudflare Workers with Wrangler)
-npm run cf:dev
-# or
-make dev
+pnpm cf:dev
 # Application runs on http://localhost:8787 by default
 ```
 
@@ -34,21 +32,21 @@ make dev
 
 ```bash
 # Build frontend for production
-npm run build
+pnpm build
 
 # Build frontend for development with watch mode
-npm run dev
+pnpm dev
 
 # Serve frontend with webpack dev server
-npm run serve
+pnpm serve
 
 # Deploy to Cloudflare Workers
-make deploy
-# This runs: npm run cf:deploy (which runs npm run build && wrangler deploy)
+pnpm cf:deploy
+# This runs: pnpm build && wrangler deploy
 
 # Check TypeScript compilation
-npx tsc --noEmit -p tsconfig.worker.json   # Worker
-npx tsc --noEmit -p tsconfig.client.json   # Client-side
+pnpm exec tsc --noEmit -p tsconfig.worker.json   # Worker
+pnpm exec tsc --noEmit -p tsconfig.client.json   # Client-side
 ```
 
 ## Tech Stack
