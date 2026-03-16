@@ -219,6 +219,10 @@ function initOptionsForm(): void {
     input.value = value.toString();
   }
 
+  // Initialize username field from localStorage
+  const usernameInput = (jsOptionsForm as any).username as HTMLInputElement;
+  usernameInput.value = getUsername();
+
   jsOptionsForm.addEventListener("submit", (e: Event) => {
     e.preventDefault();
     for (const key of optionKeys) {
@@ -238,6 +242,12 @@ function initOptionsForm(): void {
       "jsplayground-options",
       JSON.stringify(options)
     );
+
+    // Save username and update awareness
+    const username = usernameInput.value.trim() || generateDefaultUsername();
+    usernameInput.value = username;
+    saveUsername(username);
+    updateAwarenessUsername(username);
   });
 
   applyOptions();
