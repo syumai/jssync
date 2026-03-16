@@ -80,6 +80,23 @@ function saveUsername(username: string): void {
   }
 }
 
+// Awareness integration
+const userColor = '#' + Math.floor(Math.random() * 16777215).toString(16);
+let currentAwareness: any = null;
+
+function setAwarenessUser(awareness: any, username: string): void {
+  awareness.setLocalStateField('user', {
+    name: username,
+    color: userColor,
+  });
+}
+
+function updateAwarenessUsername(username: string): void {
+  if (currentAwareness) {
+    setAwarenessUser(currentAwareness, username);
+  }
+}
+
 // DOM elements
 const jsResult = document.getElementById("jsResult") as HTMLDivElement;
 const jsOptions = document.getElementById("jsOptions") as HTMLDivElement;
@@ -264,10 +281,8 @@ function initCollaborativeEditing(): void {
   const binding: CodemirrorBinding = new CodemirrorBinding(ytext, editor, provider.awareness);
 
   // Set up awareness (cursor sharing)
-  provider.awareness.setLocalStateField('user', {
-    name: 'User ' + Math.floor(Math.random() * 100),
-    color: '#' + Math.floor(Math.random() * 16777215).toString(16)
-  });
+  currentAwareness = provider.awareness;
+  setAwarenessUser(provider.awareness, getUsername());
 
   console.log('yjs collaborative editing initialized');
 }
