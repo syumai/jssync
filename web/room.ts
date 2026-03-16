@@ -53,6 +53,33 @@ const options: JsPlaygroundOptions =
     ? parsedOptions as JsPlaygroundOptions
     : defaultOptions;
 
+// Username management
+const USERNAME_STORAGE_KEY = "jsplayground-username";
+
+function generateDefaultUsername(): string {
+  return "User " + Math.floor(Math.random() * 100);
+}
+
+function getUsername(): string {
+  try {
+    const saved = window.localStorage.getItem(USERNAME_STORAGE_KEY);
+    if (saved !== null && saved.trim() !== "") {
+      return saved;
+    }
+  } catch (e) {
+    console.warn("Failed to read username from localStorage:", e);
+  }
+  return generateDefaultUsername();
+}
+
+function saveUsername(username: string): void {
+  try {
+    window.localStorage.setItem(USERNAME_STORAGE_KEY, username);
+  } catch (e) {
+    console.warn("Failed to save username to localStorage:", e);
+  }
+}
+
 // DOM elements
 const jsResult = document.getElementById("jsResult") as HTMLDivElement;
 const jsOptions = document.getElementById("jsOptions") as HTMLDivElement;
