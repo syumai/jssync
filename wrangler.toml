@@ -21,8 +21,8 @@ bindings = [
 # Durable Objects migrations
 [[migrations]]
 tag = "v1"
-new_classes = ["JSSyncDurableObject"]
+new_sqlite_classes = ["JSSyncDurableObject"]
 
 # Build configuration
 [build]
-command = "npm run build"
+command = "pnpm run build"
