@@ -144,35 +144,6 @@ function showCopyRunButtonFeedback(label: string): void {
   }, COPY_RUN_FEEDBACK_MS);
 }
 
-// Keep native copy behavior when the user is already copying selected content.
-function shouldUseNativeCopy(): boolean {
-  if ((window.getSelection()?.toString() ?? "").length > 0) {
-    return true;
-  }
-
-  const editorSelection = (editor as any).getSelection?.();
-  if (typeof editorSelection === "string" && editorSelection.length > 0) {
-    return true;
-  }
-
-  const activeElement = document.activeElement as HTMLElement | null;
-  if (!activeElement) {
-    return false;
-  }
-
-  if (activeElement.closest(".CodeMirror")) {
-    return false;
-  }
-
-  const tagName = activeElement.tagName;
-  return (
-    activeElement.isContentEditable ||
-    tagName === "INPUT" ||
-    tagName === "TEXTAREA" ||
-    tagName === "SELECT"
-  );
-}
-
 // Build the copy payload from the last run, or from the current editor state before the first run.
 function buildCopyRunText(): string {
   let code = lastExecutedCode;
@@ -333,10 +304,9 @@ window.addEventListener("keydown", (e: KeyboardEvent) => {
   if (
     e.code === "KeyC" &&
     e.ctrlKey &&
+    e.shiftKey &&
     !e.metaKey &&
-    !e.altKey &&
-    !e.shiftKey &&
-    !shouldUseNativeCopy()
+    !e.altKey
   ) {
     e.preventDefault();
     void handleCopyRun();
