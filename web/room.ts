@@ -161,42 +161,10 @@ function buildCopyRunText(): string {
   ].join("\n");
 }
 
-// Use the Clipboard API first, then fall back to execCommand for older contexts.
-async function copyTextToClipboard(text: string): Promise<void> {
-  if (window.isSecureContext && navigator.clipboard?.writeText) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return;
-    } catch (error) {
-      console.warn("Clipboard API copy failed, falling back to execCommand:", error);
-    }
-  }
-
-  const activeElement = document.activeElement as HTMLElement | null;
-  const textarea = document.createElement("textarea");
-  textarea.value = text;
-  textarea.setAttribute("readonly", "true");
-  textarea.style.position = "fixed";
-  textarea.style.top = "0";
-  textarea.style.left = "-9999px";
-  document.body.appendChild(textarea);
-  textarea.focus();
-  textarea.select();
-  textarea.setSelectionRange(0, textarea.value.length);
-
-  const copied = document.execCommand("copy");
-  textarea.remove();
-  activeElement?.focus();
-
-  if (!copied) {
-    throw new Error("Copy command failed");
-  }
-}
-
 // Copy the current run snapshot and surface the result through the button label.
 async function handleCopyRun(): Promise<void> {
   try {
-    await copyTextToClipboard(buildCopyRunText());
+    await navigator.clipboard.writeText(buildCopyRunText());
     showCopyRunButtonFeedback("Copied");
   } catch (error) {
     console.error("Failed to copy run:", error);
