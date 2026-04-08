@@ -101,6 +101,13 @@ function updateAwarenessUsername(username: string): void {
 const jsResult = document.getElementById("jsResult") as HTMLDivElement;
 const jsOptions = document.getElementById("jsOptions") as HTMLDivElement;
 const jsRunBtn = document.getElementById("jsRunBtn") as HTMLButtonElement;
+const jsCopyRunBtn = document.getElementById("jsCopyRunBtn") as HTMLButtonElement;
+
+let latestOutputLines: string[] = [];
+let lastExecutedCode: string | null = null;
+let copyRunFeedbackTimeoutId: number | null = null;
+const copyRunIdleHTML = jsCopyRunBtn.innerHTML;
+const COPY_RUN_FEEDBACK_MS = 1600;
 
 // iframe sandbox executor
 const executor = new IframeSandboxExecutor(document.body);
@@ -114,9 +121,119 @@ const createLine = (kind: string, message: string): HTMLDivElement => {
   return line;
 };
 
+// Restore the default button label and cancel pending feedback resets.
+function restoreCopyRunButtonLabel(): void {
+  if (copyRunFeedbackTimeoutId !== null) {
+    window.clearTimeout(copyRunFeedbackTimeoutId);
+    copyRunFeedbackTimeoutId = null;
+  }
+  jsCopyRunBtn.innerHTML = copyRunIdleHTML;
+}
+
+// Show temporary copy feedback on the button itself.
+function showCopyRunButtonFeedback(label: string): void {
+  restoreCopyRunButtonLabel();
+  jsCopyRunBtn.textContent = label;
+  copyRunFeedbackTimeoutId = window.setTimeout(() => {
+    restoreCopyRunButtonLabel();
+  }, COPY_RUN_FEEDBACK_MS);
+}
+
+// Keep native copy behavior when the user is already copying selected content.
+function shouldUseNativeCopy(): boolean {
+  if ((window.getSelection()?.toString() ?? "").length > 0) {
+    return true;
+  }
+
+  const editorSelection = (editor as any).getSelection?.();
+  if (typeof editorSelection === "string" && editorSelection.length > 0) {
+    return true;
+  }
+
+  const activeElement = document.activeElement as HTMLElement | null;
+  if (!activeElement) {
+    return false;
+  }
+
+  if (activeElement.closest(".CodeMirror")) {
+    return false;
+  }
+
+  const tagName = activeElement.tagName;
+  return (
+    activeElement.isContentEditable ||
+    tagName === "INPUT" ||
+    tagName === "TEXTAREA" ||
+    tagName === "SELECT"
+  );
+}
+
+// Build the copy payload from the last run, or from the current editor state before the first run.
+function buildCopyRunText(): string {
+  let code = lastExecutedCode;
+  if (code === null) {
+    editor.save();
+    code = jsBody.value;
+  }
+
+  return [
+    "// ===== Code =====",
+    code,
+    "",
+    "// ===== Output =====",
+    latestOutputLines.join("\n"),
+  ].join("\n");
+}
+
+// Use the Clipboard API first, then fall back to execCommand for older contexts.
+async function copyTextToClipboard(text: string): Promise<void> {
+  if (window.isSecureContext && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch (error) {
+      console.warn("Clipboard API copy failed, falling back to execCommand:", error);
+    }
+  }
+
+  const activeElement = document.activeElement as HTMLElement | null;
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "true");
+  textarea.style.position = "fixed";
+  textarea.style.top = "0";
+  textarea.style.left = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  textarea.setSelectionRange(0, textarea.value.length);
+
+  const copied = document.execCommand("copy");
+  textarea.remove();
+  activeElement?.focus();
+
+  if (!copied) {
+    throw new Error("Copy command failed");
+  }
+}
+
+// Copy the current run snapshot and surface the result through the button label.
+async function handleCopyRun(): Promise<void> {
+  try {
+    await copyTextToClipboard(buildCopyRunText());
+    showCopyRunButtonFeedback("Copied");
+  } catch (error) {
+    console.error("Failed to copy run:", error);
+    showCopyRunButtonFeedback("Copy failed");
+  }
+}
+
 // JavaScript execution via iframe sandbox
 function executeRunWithCode(code: string): void {
   jsResult.textContent = "";
+  latestOutputLines = [];
+  lastExecutedCode = code;
+  restoreCopyRunButtonLabel();
 
   executor.onOutput((msg: ExecutionMessage) => {
     if (msg.type === "console") {
@@ -124,9 +241,12 @@ function executeRunWithCode(code: string): void {
       const text = (msg.args ?? []).join(" ");
       const line = createLine(kind, text);
       jsResult.appendChild(line);
+      latestOutputLines.push(text);
     } else if (msg.type === "error") {
-      const line = createLine("stderr", msg.message ?? "Unknown error");
+      const text = msg.message ?? "Unknown error";
+      const line = createLine("stderr", text);
       jsResult.appendChild(line);
+      latestOutputLines.push(text);
     } else if (msg.type === "complete") {
       jsResult.appendChild(
         createLine("system", "\nProgram exited.")
@@ -139,6 +259,9 @@ function executeRunWithCode(code: string): void {
 
 // Event listeners
 jsRunBtn.addEventListener("click", () => showConfirmModal());
+jsCopyRunBtn.addEventListener("click", () => {
+  void handleCopyRun();
+});
 
 // Confirmation modal for Shift+Enter execution
 const jsConfirmModal = document.getElementById("jsConfirmModal") as HTMLDivElement;
@@ -191,10 +314,28 @@ function showConfirmModal(): void {
   window.addEventListener("keydown", onKeydown);
 }
 
-window.addEventListener("keypress", (e: KeyboardEvent) => {
+window.addEventListener("keydown", (e: KeyboardEvent) => {
+  if (e.defaultPrevented || e.isComposing || e.repeat) {
+    return;
+  }
+
   if (e.key === "Enter" && e.shiftKey) {
     e.preventDefault();
     showConfirmModal();
+    return;
+  }
+
+  if (
+    e.code === "KeyC" &&
+    e.ctrlKey &&
+    !e.metaKey &&
+    !e.altKey &&
+    !e.shiftKey &&
+    !shouldUseNativeCopy()
+  ) {
+    e.preventDefault();
+    void handleCopyRun();
+    return;
   }
 });
 
@@ -300,6 +441,7 @@ function initCollaborativeEditing(): void {
 // Initialize everything when DOM is loaded
 function init(): void {
   initOptionsForm();
+  restoreCopyRunButtonLabel();
 
   // Wait for CodeMirror to be fully initialized
   setTimeout(() => {
