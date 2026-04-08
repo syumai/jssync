@@ -102,11 +102,12 @@ const jsResult = document.getElementById("jsResult") as HTMLDivElement;
 const jsOptions = document.getElementById("jsOptions") as HTMLDivElement;
 const jsRunBtn = document.getElementById("jsRunBtn") as HTMLButtonElement;
 const jsCopyRunBtn = document.getElementById("jsCopyRunBtn") as HTMLButtonElement;
+const jsCopyRunDefault = jsCopyRunBtn.querySelector(".copy-run-default") as HTMLSpanElement;
+const jsCopyRunFeedback = jsCopyRunBtn.querySelector(".copy-run-feedback") as HTMLSpanElement;
 
 let latestOutputLines: string[] = [];
 let lastExecutedCode: string | null = null;
 let copyRunFeedbackTimeoutId: number | null = null;
-const copyRunIdleHTML = jsCopyRunBtn.innerHTML;
 const COPY_RUN_FEEDBACK_MS = 1600;
 
 // iframe sandbox executor
@@ -127,13 +128,17 @@ function restoreCopyRunButtonLabel(): void {
     window.clearTimeout(copyRunFeedbackTimeoutId);
     copyRunFeedbackTimeoutId = null;
   }
-  jsCopyRunBtn.innerHTML = copyRunIdleHTML;
+  jsCopyRunDefault.classList.remove("hidden");
+  jsCopyRunFeedback.classList.add("hidden");
+  jsCopyRunFeedback.textContent = "";
 }
 
 // Show temporary copy feedback on the button itself.
 function showCopyRunButtonFeedback(label: string): void {
   restoreCopyRunButtonLabel();
-  jsCopyRunBtn.textContent = label;
+  jsCopyRunDefault.classList.add("hidden");
+  jsCopyRunFeedback.textContent = label;
+  jsCopyRunFeedback.classList.remove("hidden");
   copyRunFeedbackTimeoutId = window.setTimeout(() => {
     restoreCopyRunButtonLabel();
   }, COPY_RUN_FEEDBACK_MS);

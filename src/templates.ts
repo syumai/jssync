@@ -60,7 +60,10 @@ export const roomTemplate = (data: RoomTemplateData): string => {
     <div class="header-content">
       <div class="button-container">
         <button id="jsRunBtn" class="primary">Run <kbd>(Shift+Enter)</kbd></button>
-        <button id="jsCopyRunBtn">Copy Run <kbd>(Ctrl + C)</kbd></button>
+        <button id="jsCopyRunBtn">
+          <span class="copy-run-default">Copy Run <kbd>(Ctrl + C)</kbd></span>
+          <span class="copy-run-feedback hidden"></span>
+        </button>
         <button id="jsOptionsBtn">Options</button>
       </div>
       <div class="link-to-github">

@@ -138,6 +138,17 @@ header .button-container {
   white-space: nowrap;
 }
 
+#jsCopyRunBtn .copy-run-default,
+#jsCopyRunBtn .copy-run-feedback {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hidden {
+  display: none !important;
+}
+
 header a {
   color: #fff;
 }
