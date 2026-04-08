@@ -96,6 +96,18 @@ a:hover {
   header {
     height: 70px;
   }
+
+  header .header-content {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  header .button-container {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-left: 12px;
+  }
 }
 
 header .title {
@@ -113,6 +125,28 @@ header .header-content {
 header .button-container {
   margin-left: 16px;
   display: flex;
+  align-items: center;
+}
+
+#jsCopyRunBtn {
+  margin-right: 9px;
+  min-width: 162px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+#jsCopyRunBtn .copy-run-default,
+#jsCopyRunBtn .copy-run-feedback {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hidden {
+  display: none !important;
 }
 
 header a {
