@@ -73,6 +73,7 @@ export const roomTemplate = (data: RoomTemplateData): string => {
   </header>
   <main class="app">
     <textarea id="jsBody" class="code-body"></textarea>
+    <div id="jsResizer" class="resizer" role="separator" aria-orientation="horizontal" aria-label="Resize editor"></div>
     <div id="jsResult" class="result"></div>
     <div id="jsOptions" class="options hidden">
       <form id="jsOptionsForm" action="#">
