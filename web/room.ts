@@ -195,7 +195,9 @@ async function runCode(): Promise<void> {
 
     const appendLine = (kind: string, text: string): void => {
       jsResult.appendChild(createLine(kind, text));
-      latestOutputLines.push(text);
+      if (kind !== "system") {
+        latestOutputLines.push(text);
+      }
     };
 
     let response: Response;
