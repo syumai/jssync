@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  // Private runtime Worker for jssync. No public route; called from the
+  // jssync Worker through the JAVASCRIPT Service Binding only.
+  "name": "jssync-sandbox-javascript",
+  "main": "javascript.js",
+  "compatibility_date": "2026-09-04",
+  "workers_dev": false,
+  "preview_urls": false,
+  "limits": { "cpu_ms": 2000 },
+  "rules": [
+    { "type": "Data", "globs": ["**/*.bin"], "fallthrough": true }
+  ]
+}

@@ -10,11 +10,13 @@
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch",
     "serve": "webpack serve --mode development",
-    "wrangler:dev": "wrangler dev",
+    "wrangler:dev": "wrangler dev -c wrangler.toml -c sandbox/wrangler.javascript.jsonc",
     "wrangler:deploy": "wrangler deploy",
     "wrangler:types": "wrangler types",
-    "cf:dev": "wrangler dev",
-    "cf:deploy": "wrangler deploy"
+    "cf:dev": "wrangler dev -c wrangler.toml -c sandbox/wrangler.javascript.jsonc",
+    "cf:deploy": "wrangler deploy",
+    "sandbox:deploy": "pnpm --dir sandbox run deploy",
+    "sandbox:dry-run": "pnpm --dir sandbox run dry-run"
   },
   "repository": {
     "type": "git",
@@ -27,6 +29,7 @@
   },
   "homepage": "https://github.com/syumai/jssync#readme",
   "dependencies": {
+    "@sandbox-workers/core": "0.2.0",
     "hono": "^4.12.7",
     "lib0": "^0.2.117",
     "y-codemirror": "^3.0.1",

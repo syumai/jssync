@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 gpsync is a collaborative real-time code editor based on The Go Playground. It allows multiple users to simultaneously edit Go code in shared rooms using Yjs for real-time collaboration and conflict-free collaborative editing.
 
-**Live demo**: https://gpsync.syumai.workers.dev/
+**Live demo**: https://jssync.syumai.dev/
 
 ## Development Commands
 
@@ -43,6 +43,9 @@ npm run wrangler:dev
 
 # Production deployment with Wrangler
 npm run wrangler:deploy
+
+# Deploy the JS sandbox runtime Worker (must run before cf:deploy)
+pnpm sandbox:deploy
 ```
 
 ### Quality Checks
@@ -81,7 +84,7 @@ The application runs entirely on Cloudflare Workers with Durable Objects:
 2. Static assets served from edge cache
 3. WebSocket connections upgrade to Durable Objects for real-time collaboration
 4. Collaborative editing state synchronized via Yjs operations stored in Durable Objects
-5. Go code execution handled via direct Go Playground API calls
+5. Code execution: client POSTs to `/api/run`; the Worker runs it through the `JAVASCRIPT` Service Binding (`jssync-sandbox-javascript`, built with `@sandbox-workers/javascript`)
 
 ### Key URL Patterns
 - `/` - Home page
@@ -98,7 +101,9 @@ gpsync/
 │   ├── validators.ts      # Input validation
 │   └── templates.ts       # HTML templates
 ├── web/                   # Frontend TypeScript code
-│   └── room.ts           # Client-side room functionality
+│   ├── room.ts            # Client-side room functionality
+│   └── run-types.ts       # Shared `RunResponse` type for `/api/run` (imported by both worker and client)
+├── sandbox/                # JS sandbox runtime Worker (see sandbox/README.md); deploy before the main Worker
 ├── public/                # Static assets and webpack output
 ├── wrangler.toml          # Cloudflare Workers configuration
 ├── webpack.config.js      # Frontend build configuration

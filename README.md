@@ -4,16 +4,16 @@ A collaborative real-time JavaScript Playground. Allows multiple users to simult
 
 ## Demo
 
-https://jssync.syumai.workers.dev/
+https://jssync.syumai.dev/
 
 ### Features
 
 ```console
 # Open room
-https://jssync.syumai.workers.dev/rooms/:roomId
+https://jssync.syumai.dev/rooms/:roomId
 ```
 
-* JavaScript code execution in sandboxed iframe
+* JavaScript code execution in a server-side sandbox ([sandbox-workers](https://github.com/syumai/sandbox-workers), SpiderMonkey Wasm on Cloudflare Workers)
 * Real-time collaborative editing with multiple cursors
 * Vim mode and tab width options
 
@@ -26,6 +26,18 @@ pnpm install
 # Start the development server (Cloudflare Workers with Wrangler)
 pnpm cf:dev
 # Application runs on http://localhost:8787 by default
+```
+
+### Deploy
+
+The sandbox runtime Worker must be deployed before the main jssync Worker,
+since the main Worker's `wrangler.toml` binds it as the `JAVASCRIPT` Service
+Binding:
+
+```bash
+cd sandbox && pnpm install && cd ..
+pnpm sandbox:deploy
+pnpm cf:deploy
 ```
 
 ### Development Commands
@@ -60,7 +72,7 @@ pnpm exec tsc --noEmit -p tsconfig.client.json   # Client-side
 
 ### Frontend
 * **Editor**: CodeMirror with y-codemirror for Yjs integration
-* **JS Execution**: Sandboxed iframe with `sandbox="allow-scripts"`
+* **JS Execution**: `POST /api/run` to the Worker, which calls the private `jssync-sandbox-javascript` runtime Worker via a Service Binding
 * **Real-time**: Yjs client libraries (yjs, y-protocols, lib0)
 * **Build**: Webpack 5 with TypeScript and Babel loaders
 * **Language**: TypeScript
@@ -76,6 +88,7 @@ The application runs entirely on Cloudflare Workers with Durable Objects:
 
 1. **Hono HTTP Server**: HTTP server with HTML template rendering and static asset serving
 2. **Durable Objects**: Real-time collaborative editing using y-durableobjects with persistent room state
+3. **Sandbox runtime Worker** (`sandbox/`): private `@sandbox-workers/javascript` Worker that executes user code in a fuel-metered Wasm SpiderMonkey instance
 
 Collaborative editing is powered by Yjs for conflict-free replicated data types (CRDTs), providing superior real-time collaboration with global edge distribution via Cloudflare's network.
 

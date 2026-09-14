@@ -4,7 +4,7 @@
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { CodemirrorBinding } from 'y-codemirror';
-import { IframeSandboxExecutor, ExecutionMessage } from './js-executor';
+import { RunResponse } from './run-types';
 
 // Type declarations for global objects and interfaces
 interface JsPlaygroundOptions {
@@ -110,8 +110,8 @@ let lastExecutedCode: string | null = null;
 let copyRunFeedbackTimeoutId: number | null = null;
 const COPY_RUN_FEEDBACK_MS = 1600;
 
-// iframe sandbox executor
-const executor = new IframeSandboxExecutor(document.body);
+// Guards against overlapping /api/run requests.
+let isRunning = false;
 
 // Utility functions
 const createLine = (kind: string, message: string): HTMLDivElement => {
@@ -172,91 +172,96 @@ async function handleCopyRun(): Promise<void> {
   }
 }
 
-// JavaScript execution via iframe sandbox
-function executeRunWithCode(code: string): void {
-  jsResult.textContent = "";
-  latestOutputLines = [];
-  lastExecutedCode = code;
-  restoreCopyRunButtonLabel();
+// JavaScript execution via the server-side sandbox (POST /api/run)
+async function runCode(): Promise<void> {
+  if (isRunning) {
+    return;
+  }
+  isRunning = true;
+  jsRunBtn.disabled = true;
 
-  executor.onOutput((msg: ExecutionMessage) => {
-    if (msg.type === "console") {
-      const kind = msg.level === "error" ? "stderr" : "stdout";
-      const text = (msg.args ?? []).join(" ");
-      const line = createLine(kind, text);
-      jsResult.appendChild(line);
+  try {
+    // Take a snapshot of the current code
+    editor.save();
+    const code = jsBody.value;
+
+    jsResult.textContent = "";
+    latestOutputLines = [];
+    lastExecutedCode = code;
+    restoreCopyRunButtonLabel();
+
+    const runningLine = createLine("system", "Running...");
+    jsResult.appendChild(runningLine);
+
+    const appendLine = (kind: string, text: string): void => {
+      jsResult.appendChild(createLine(kind, text));
       latestOutputLines.push(text);
-    } else if (msg.type === "error") {
-      const text = msg.message ?? "Unknown error";
-      const line = createLine("stderr", text);
-      jsResult.appendChild(line);
-      latestOutputLines.push(text);
-    } else if (msg.type === "complete") {
-      jsResult.appendChild(
-        createLine("system", "\nProgram exited.")
-      );
+    };
+
+    let response: Response;
+    try {
+      response = await fetch("/api/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+    } catch (error) {
+      runningLine.remove();
+      const message = error instanceof Error ? error.message : String(error);
+      appendLine("stderr", `Failed to reach the server: ${message}`);
+      appendLine("system", "\nProgram exited.");
+      return;
     }
-  });
 
-  executor.execute(code);
+    runningLine.remove();
+
+    let data: unknown;
+    try {
+      data = await response.json();
+    } catch {
+      data = {};
+    }
+
+    if (response.ok) {
+      const result = data as RunResponse;
+      for (const text of result.stdout ?? []) {
+        appendLine("stdout", text);
+      }
+      for (const text of result.stderr ?? []) {
+        appendLine("stderr", text);
+      }
+      for (const text of result.results ?? []) {
+        appendLine("stdout", text);
+      }
+      if (result.error) {
+        appendLine("stderr", `${result.error.name}: ${result.error.message}`);
+        for (const line of result.error.traceback ?? []) {
+          appendLine("stderr", line);
+        }
+      }
+      appendLine("system", "\nProgram exited.");
+    } else {
+      const errorMessage = (data as { error?: unknown } | null)?.error;
+      const message =
+        typeof errorMessage === "string"
+          ? errorMessage
+          : `Request failed (HTTP ${response.status})`;
+      appendLine("stderr", message);
+      appendLine("system", "\nProgram exited.");
+    }
+  } finally {
+    jsRunBtn.disabled = false;
+    isRunning = false;
+  }
 }
 
 // Event listeners
-jsRunBtn.addEventListener("click", () => showConfirmModal());
+jsRunBtn.addEventListener("click", () => {
+  void runCode();
+});
 jsCopyRunBtn.addEventListener("click", () => {
   void handleCopyRun();
 });
-
-// Confirmation modal for Shift+Enter execution
-const jsConfirmModal = document.getElementById("jsConfirmModal") as HTMLDivElement;
-const jsConfirmRun = document.getElementById("jsConfirmRun") as HTMLButtonElement;
-const jsConfirmCancel = document.getElementById("jsConfirmCancel") as HTMLButtonElement;
-const jsConfirmCode = document.getElementById("jsConfirmCode") as HTMLElement;
-const modalBackdrop = jsConfirmModal.querySelector(".modal-backdrop") as HTMLDivElement;
-
-function showConfirmModal(): void {
-  // Take a snapshot of the current code
-  editor.save();
-  const codeSnapshot = jsBody.value;
-
-  // Display the snapshot in the modal
-  jsConfirmCode.textContent = codeSnapshot;
-  jsConfirmModal.classList.remove("hidden");
-  jsConfirmRun.focus();
-
-  const onConfirm = () => {
-    hideConfirmModal();
-    executeRunWithCode(codeSnapshot);
-    editor.focus();
-  };
-
-  const onCancel = () => {
-    hideConfirmModal();
-  };
-
-  const onKeydown = (e: KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      onConfirm();
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      onCancel();
-    }
-  };
-
-  function hideConfirmModal(): void {
-    jsConfirmModal.classList.add("hidden");
-    jsConfirmRun.removeEventListener("click", onConfirm);
-    jsConfirmCancel.removeEventListener("click", onCancel);
-    modalBackdrop.removeEventListener("click", onCancel);
-    window.removeEventListener("keydown", onKeydown);
-  }
-
-  jsConfirmRun.addEventListener("click", onConfirm);
-  jsConfirmCancel.addEventListener("click", onCancel);
-  modalBackdrop.addEventListener("click", onCancel);
-  window.addEventListener("keydown", onKeydown);
-}
 
 window.addEventListener("keydown", (e: KeyboardEvent) => {
   if (e.defaultPrevented || e.isComposing || e.repeat) {
@@ -265,7 +270,7 @@ window.addEventListener("keydown", (e: KeyboardEvent) => {
 
   if (e.key === "Enter" && e.shiftKey) {
     e.preventDefault();
-    showConfirmModal();
+    void runCode();
     return;
   }
 

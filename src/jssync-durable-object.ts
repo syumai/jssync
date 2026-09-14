@@ -3,6 +3,7 @@ import { YDurableObjects } from "y-durableobjects";
 export interface JsSyncEnv {
   JSSYNC_ROOMS: DurableObjectNamespace;
   ASSETS: Fetcher;
+  JAVASCRIPT: Fetcher;
 }
 
 // Use any to bypass TypeScript issues with y-durableobjects for now

@@ -44,12 +44,6 @@ npm run wrangler:dev
 npm run wrangler:deploy
 ```
 
-### Legacy Heroku
-```bash
-# Deploy via git
-make deploy
-```
-
 ## No Linting/Formatting Tools
 The project currently does not have:
 - ESLint configuration
@@ -73,4 +67,3 @@ Test in both development and production-like environments:
 - Local development server
 - Wrangler dev environment  
 - Deployed Cloudflare Workers
-- Legacy Heroku deployment (if still active)

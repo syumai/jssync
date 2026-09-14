@@ -100,19 +100,6 @@ export const roomTemplate = (data: RoomTemplateData): string => {
     </div>
   </main>
 
-  <div id="jsConfirmModal" class="modal hidden">
-    <div class="modal-backdrop"></div>
-    <div class="modal-content">
-      <p>Run this code?</p>
-      <p class="modal-note">This code will be executed in your browser.</p>
-      <pre class="modal-code-preview"><code id="jsConfirmCode"></code></pre>
-      <div class="modal-buttons">
-        <button id="jsConfirmRun" class="primary">Run <kbd>(Enter)</kbd></button>
-        <button id="jsConfirmCancel">Cancel</button>
-      </div>
-    </div>
-  </div>
-
   <script src="https://cdn.jsdelivr.net/npm/codemirror@5.58.3/lib/codemirror.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/codemirror@5.58.3/mode/javascript/javascript.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/codemirror@5.58.3/keymap/vim.js" integrity="sha256-3Vs/zwB+ju4BxOZ3amZj4qchA0O07FRuPntPcfYEQk8=" crossorigin="anonymous"></script>

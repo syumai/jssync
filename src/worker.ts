@@ -1,22 +1,28 @@
 import { Hono } from "hono";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { yRoute } from "y-durableobjects";
+import { runCode, SandboxError } from "@sandbox-workers/core";
 import { JSSyncDurableObject, JsSyncEnv } from "./jssync-durable-object.js";
 import {
   validateRoomId,
   InvalidArgumentError
 } from "./validators.js";
 import { homeTemplate, roomTemplate } from "./templates.js";
+import type { RunResponse } from "../web/run-types.js";
 
 type Env = JsSyncEnv;
 
 const app = new Hono<{ Bindings: Env }>();
+
+const MAX_RUN_CODE_LENGTH = 100_000;
 
 // Serve static assets using the ASSETS binding
 app.get("/*", async (c, next) => {
   const url = new URL(c.req.url);
 
   // Skip API routes and specific application routes
-  if (url.pathname.startsWith("/yjs/") ||
+  if (url.pathname.startsWith("/api/") ||
+      url.pathname.startsWith("/yjs/") ||
       url.pathname.startsWith("/rooms/") ||
       url.pathname.startsWith("/health") ||
       url.pathname === "/") {
@@ -53,6 +59,77 @@ app.get("/rooms/:roomId", (c) => {
     }
     console.error("Error handling room request:", error);
     return c.text("Internal Server Error", 500);
+  }
+});
+
+// JavaScript code execution route, backed by the JAVASCRIPT sandbox
+// runtime Worker (see sandbox/) via a Service Binding.
+app.post("/api/run", async (c) => {
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "Request body must be JSON" }, 400);
+  }
+
+  if (
+    !body ||
+    typeof body !== "object" ||
+    Array.isArray(body) ||
+    typeof (body as { code?: unknown }).code !== "string"
+  ) {
+    return c.json({ error: "'code' must be a string" }, 400);
+  }
+
+  const code = (body as { code: string }).code;
+  if (code.length > MAX_RUN_CODE_LENGTH) {
+    return c.json({ error: "'code' is too long" }, 413);
+  }
+
+  try {
+    const result = await runCode(c.env.JAVASCRIPT, code, { timeout: 15000 });
+    const response: RunResponse = {
+      stdout: result.logs.stdout,
+      stderr: result.logs.stderr,
+      results: result.results.reduce<string[]>((acc, entry) => {
+        if (typeof entry.text === "string") {
+          acc.push(entry.text);
+        } else if (entry.json !== undefined) {
+          try {
+            acc.push(JSON.stringify(entry.json, null, 2));
+          } catch {
+            acc.push(String(entry.json));
+          }
+        }
+        return acc;
+      }, []),
+      ...(result.error ? { error: result.error } : {}),
+      durationMs: result.durationMs,
+    };
+    return c.json(response, 200);
+  } catch (error) {
+    if (error instanceof SandboxError) {
+      const status =
+        typeof error.httpStatus === "number" &&
+        error.httpStatus >= 400 &&
+        error.httpStatus <= 599
+          ? error.httpStatus
+          : 502;
+      return c.json(
+        { error: error.message, code: error.code },
+        status as ContentfulStatusCode
+      );
+    }
+
+    if (
+      (error instanceof DOMException && error.name === "TimeoutError") ||
+      (error instanceof Error && error.name === "AbortError")
+    ) {
+      return c.json({ error: "Execution timed out" }, 504);
+    }
+
+    console.error("Error running code:", error);
+    return c.json({ error: "Internal Server Error" }, 500);
   }
 });
 

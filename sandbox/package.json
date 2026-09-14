@@ -1,0 +1,16 @@
+{
+  "name": "jssync-sandbox-runtimes",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev -c wrangler.javascript.jsonc",
+    "deploy": "wrangler deploy -c wrangler.javascript.jsonc",
+    "dry-run": "wrangler deploy --dry-run -c wrangler.javascript.jsonc --outdir dist/javascript"
+  },
+  "dependencies": {
+    "@sandbox-workers/javascript": "0.2.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.129.0"
+  }
+}
